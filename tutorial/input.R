@@ -1,4 +1,4 @@
-# ================================================================
+# ===============================================================                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        =
 # 1) PRELIMINARIES
 #    - User inputs
 #    - Helpers
@@ -6,8 +6,8 @@
 #    - GBIF occurrences (multi-species)
 #    - Correlation-based variable selection (on PRESENT)
 # ================================================================
-
 ## 1.1 Packages ---------------------------------------------------------------
+library(dismo)
 library(geodata)
 library(terra)
 library(sf)
@@ -21,7 +21,7 @@ library(hypervolume)
 
 ## 1.2 User inputs (EDIT here) ------------------------------------------------
 params <- list(
-  species      = c("Bufo bufo", "Bufotes viridis", "Pelophylax esculentus"),
+  species      = c("Bufo bufo", "Bufotes viridis", "Bombina variegata"),
   country_name = "Italy",
   country_iso  = "IT",
   res_arcmin   = 2.5,
@@ -85,7 +85,7 @@ gbif_occ_list <- function(species_vec, country_iso, years, limit) {
 }
 
 ## 1.4 Country boundary & climate rasters -------------------------------------
-## you can replace it with your own vector
+## they can be replaced with your own data
 country_vec <- geodata::gadm(params$country_name, level = 0, path = params$outdir)
 
 bio_present <- geodata::worldclim_country(
@@ -104,10 +104,8 @@ message("Present (aligned) res: ", paste(terra::res(bio_present_aligned), collap
 message("Future res:            ", paste(terra::res(bio_future),         collapse = ", "))
 print(terra::compareGeom(bio_present_aligned, bio_future, stopOnError = FALSE))
 
-## 1.5 GBIF occurrences --------------------------------------------------------
-occ_list <- gbif_occ_list(params$species, params$country_iso, params$gbif_years, params$gbif_limit)
 
-## 1.6 Variable selection (on PRESENT) ----------------------------------------
+## 1.5 Variable selection (on PRESENT) ----------------------------------------
 cor_res   <- drop_high_corr(bio_present_aligned, thr = params$cor_thr, frac = params$cor_frac)
 cmat      <- cor_res$cor
 vars_keep <- cor_res$selected
@@ -119,9 +117,15 @@ bio_future_sel  <- bio_future[[vars_keep]]
 # (optional) visualize correlation matrix
 corrplot::corrplot(cmat, method="number", col=viridis::magma(30), type="lower", tl.pos="ld", number.cex=0.6)
 
+plot(bio_present_sel)
+
+## 1.6 GBIF occurrences --------------------------------------------------------
+occ_list <- gbif_occ_list(params$species, params$country_iso, params$gbif_years, params$gbif_limit)
+
 # Hand-off bundle for next sections
 prelim <- list(
   params=params, country_vec=country_vec,
   bio_present_sel=bio_present_sel, bio_future_sel=bio_future_sel,
   occ_list=occ_list, vars_keep=vars_keep, vars_drop=vars_drop
 )
+
