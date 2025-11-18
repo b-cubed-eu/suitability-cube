@@ -1,4 +1,4 @@
-# ================================================================
+# =============================================================+===
 # 3) STARS CUBE CREATION
 #    - Build a cell grid over the country
 #    - Aggregate AOA/DI to the grid (species × time)
@@ -22,6 +22,7 @@ grid_cells <- sf::st_make_grid(country_sf, cellsize = cellsize_deg,
   sf::st_as_sf() |>
   dplyr::mutate(cell = seq_len(dplyr::n()))
 sf::st_crs(grid_cells) <- 4326
+
 
 ## 3.4 Aggregate helper (single-layer raster → grid) ---------------------------
 as_stars_on_grid <- function(sr, grid, fun = mean, name = NULL, na.rm = TRUE) {
@@ -107,4 +108,38 @@ data_cube <- stars::st_set_dimensions(data_cube, "time",  values = c("present","
 # sanity check
 print(stars::st_dimensions(data_cube))
 
-data_cube
+## plots
+library(ggplot2)
+library(sf)
+
+# ensure sf types
+country_sf <- if (!inherits(country_sf, "sf")) st_as_sf(country_sf) else country_sf
+grid_sf    <- if (!inherits(grid_cells, "sf")) st_as_sf(grid_cells) else grid_cells
+
+# same CRS
+if (st_crs(grid_sf) != st_crs(country_sf)) {
+  grid_sf <- st_transform(grid_sf, st_crs(country_sf))
+}
+
+# quick map
+ggplot() +
+  geom_sf(data = country_sf, fill = "plum2", color = "red", linewidth = 0.3) +
+  geom_sf(data = grid_sf, fill = NA, color = "black", linewidth = 0.2) +
+  labs(title = "Analysis grid", x = NULL, y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid = element_blank())
+
+# stars summary (concise)
+print(data_cube)
+
+
+# explicit dimensions table
+stars::st_dimensions(data_cube)
+
+# list of attributes and basic stats
+names(data_cube)                # AOA, DI, HV
+summary(data_cube[c("AOA","DI","HV")])
+
+# optional: a quick sanity check plot for one species & time
+# plot(data_cube["DI"][, "Bufo bufo", "present"], main = "DI — Bufo bufo (present)")
+plot(data_cube)
