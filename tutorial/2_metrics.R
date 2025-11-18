@@ -1,4 +1,3 @@
-
 # ================================================================
 # 2) CONTENT
 #    - Hypervolume on PRESENT (per species)
@@ -82,3 +81,7 @@ for (sp in params$species) {
 }
 
 detach(prelim)
+
+plot(aoa_di_by_species$`Bufo bufo`$present$DI)
+plot(aoa_di_by_species$`Bufo bufo`$present$AOA)
+                 
